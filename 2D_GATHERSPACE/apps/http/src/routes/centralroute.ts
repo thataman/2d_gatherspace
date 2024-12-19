@@ -1,12 +1,18 @@
 import { Router } from "express";
-import { signupUser } from "../controllers/userController";
+import  {signinUser,signupUser,getAvatars,getElements}  from "../controllers/userController";
+import { userRouter } from "./userroute";
+import { adminRouter } from "./adminroute";
+import { spaceRouter } from "./spaceroute";
+
+
+
 export const router = Router()
 
 router.route("/signup").get(signupUser)
-// router.route("/signin").get(signinUser)
-// router.route("/elements").get(getElements)
-// router.route("/avatars").get(getAvatars)
+router.route("/signin").get(signinUser)
+router.route("/elements").get(getElements)
+router.route("/avatars").get(getAvatars)
 
-// router.use("/user")
-// router.use("admin")
-// router.use("/space")
+router.use("/user" , userRouter)
+router.use("admin" ,adminRouter)
+router.use("/space",spaceRouter)
