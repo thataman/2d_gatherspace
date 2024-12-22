@@ -1,13 +1,15 @@
 import { Request, Response } from "express";
 import { signinSchema, signupSchema } from "../validators/schemavalidator";
 import client from "@repo/db/client";
+import { generateaccesstoken } from "../utils/utils";
 
-export const signupUser = async (req: Request, res: Response) => {
+
+export const signupUser = async (req: Request, res: Response): Promise<void> => {
     try {
         const parsedData = signupSchema.safeParse(req.body);
         if (!parsedData.success) {
-            return res.status(403).json({ message: "validation failed" })
-
+             res.status(403).json({ message: "validation failed" })
+            return
         }
 
         // const hashedPassword = await bycrpt.hash(parsedData.data.password, 10);
@@ -20,20 +22,20 @@ export const signupUser = async (req: Request, res: Response) => {
             }
         })
 
-        return res.status(200).json({ userId: user.id })
-
+         res.status(200).json({ userId: user.id })
+         return
     } catch (error) {
         console.log(error);
         throw error
     }
 }
 
-export const signinUser = async (req: Request, res: Response) => {
+export const signinUser = async (req: Request, res: Response) : Promise<void> => {
     try {
         const parsedData = signinSchema.safeParse(req.body)
         if (!parsedData.success) {
-            return res.status(403).json({ message: "validation failed" })
-
+             res.status(403).json({ message: "validation failed" })
+return
         }
 
         const user = await client.user.findUnique({
@@ -42,19 +44,20 @@ export const signinUser = async (req: Request, res: Response) => {
             }
         })
         if (!user) {
-            return res.status(400).json({ message: "didnt find any user" })
+             res.status(400).json({ message: "didnt find any user" })
+            return
         }
         // const isPasswordValid = await bcrypt.compare(parsedData.data.password, user.password)
 
         // if (!isPasswordValid) {
         //     return res.status(400).json({ message: "wrong password" })
         // }
-
-        return res.status(200).json({token:"iehfijqpra"})
-
+        const accesstoken = generateaccesstoken(user)
+         res.status(200).json({ token: accesstoken })
+         return
     } catch (error) {
-console.log(error);
-throw error
+        console.log(error);
+        throw error
 
     }
 }
@@ -68,7 +71,7 @@ export const getAvatars = async (req: Request, res: Response) => {
     res.json("signup")
 }
 
-export const getUserMetadaa = async (req: Request, res: Response) => {
+export const getUserMetadata = async (req: Request, res: Response) => {
     res.json("signup")
 }
 

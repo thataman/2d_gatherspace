@@ -1,5 +1,5 @@
 import { Router } from "express";
-import  {signinUser,signupUser,getAvatars,getElements}  from "../controllers/userController";
+import { signupUser,signinUser,getElements,getAvatars } from "../controllers/userController";
 import { userRouter } from "./userroute";
 import { adminRouter } from "./adminroute";
 import { spaceRouter } from "./spaceroute";
