@@ -1,8 +1,11 @@
 import { Request, Response } from "express";
-import { signinSchema, signupSchema } from "../validators/schemavalidator";
+import { signinSchema, signupSchema,updateMetadataSchema } from "../validators/schemavalidator";
+
 import client from "@repo/db/client";
 import { generateaccesstoken } from "../utils/utils";
-
+interface CustomRequest extends Request {
+    userId?: string;
+}
 
 export const signupUser = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -18,7 +21,7 @@ export const signupUser = async (req: Request, res: Response): Promise<void> => 
             data: {
                 username: parsedData.data.username,
                 // password: hashedPassword,
-                role: parsedData.data.type === 'admin' ? "admin" : "user"
+                role: parsedData.data.role === 'admin' ? "admin" : "user"
             }
         })
 
@@ -26,7 +29,7 @@ export const signupUser = async (req: Request, res: Response): Promise<void> => 
          return
     } catch (error) {
         console.log(error);
-        throw error
+        res.status(400).json({message : error})
     }
 }
 
@@ -57,7 +60,7 @@ return
          return
     } catch (error) {
         console.log(error);
-        throw error
+        res.status(400).json({message : error})
 
     }
 }
@@ -71,11 +74,31 @@ export const getAvatars = async (req: Request, res: Response) => {
     res.json("signup")
 }
 
-export const getUserMetadata = async (req: Request, res: Response) => {
-    res.json("signup")
+export const getUserMetadata = async (req: CustomRequest, res: Response) => {
+    const parsedData = updateMetadataSchema.safeParse(req.body)
+    if(!parsedData){
+        res.status(400).json({message : "metadata didnt recieved"})
+        return
+    }
+
+   try {
+     const user = await client.user.update({
+         where : {
+             id : req.userId
+         },
+         data : {
+             avatarId : parsedData.data?.avatarid
+         }
+     })
+     res.status(200).json({message : "metadata updated"})
+   } catch (error) {
+    res.status(400).json({message : error})
+   }
 }
 
 
+
+
 export const getBulkUserData = async (req: Request, res: Response) => {
-    res.json("signup")
+ const userIds = req.query.userId
 }

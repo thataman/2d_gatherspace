@@ -3,12 +3,12 @@ import Jwt from "jsonwebtoken"
 import dotenv from "dotenv"
 dotenv.config()
 
-interface CustomadminRequest extends Request {
+interface CustomRequest extends Request {
     userId?: string;
 }
 
 
-export const adminMiddleware = async (req: CustomadminRequest, res: Response, next: NextFunction) => {
+export const adminMiddleware = async (req: CustomRequest, res: Response, next: NextFunction) => {
     const header = req.headers["authorization"]
     const token = header?.split(" ")[1]
 

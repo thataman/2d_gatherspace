@@ -4,7 +4,7 @@ export const signupSchema = z.object({
 
     username : z.string().email(),
     password : z.string().min(8),
-    type : z.enum(["user","admin"])
+    role : z.enum(["user","admin"])
 })
 
 export const signinSchema = z.object({
@@ -14,7 +14,7 @@ export const signinSchema = z.object({
 
 
 export const updateMetadataSchema = z.object({
-    avatar_id : z.string()
+    avatarid : z.string()
 })
 
 export const createSpaceSchema = z.object({
