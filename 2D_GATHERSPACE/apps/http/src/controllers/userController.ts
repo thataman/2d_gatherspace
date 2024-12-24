@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { signinSchema, signupSchema,updateMetadataSchema } from "../validators/schemavalidator";
+import { signinSchema, signupSchema, updateMetadataSchema } from "../validators/schemavalidator";
 
 import client from "@repo/db/client";
 import { generateaccesstoken } from "../utils/utils";
@@ -11,13 +11,13 @@ export const signupUser = async (req: Request, res: Response): Promise<void> => 
     try {
         const parsedData = signupSchema.safeParse(req.body);
         if (!parsedData.success) {
-             res.status(403).json({ message: "validation failed" })
+            res.status(403).json({ message: "validation failed" })
             return
         }
 
         // const hashedPassword = await bycrpt.hash(parsedData.data.password, 10);
 
-        const user = await client.user.create({
+        const user = await client.User.create({
             data: {
                 username: parsedData.data.username,
                 // password: hashedPassword,
@@ -25,29 +25,29 @@ export const signupUser = async (req: Request, res: Response): Promise<void> => 
             }
         })
 
-         res.status(200).json({ userId: user.id })
-         return
+        res.status(200).json({ userId: user.id })
+        return
     } catch (error) {
         console.log(error);
-        res.status(400).json({message : error})
+        res.status(400).json({ message: error })
     }
 }
 
-export const signinUser = async (req: Request, res: Response) : Promise<void> => {
+export const signinUser = async (req: Request, res: Response): Promise<void> => {
     try {
         const parsedData = signinSchema.safeParse(req.body)
         if (!parsedData.success) {
-             res.status(403).json({ message: "validation failed" })
-return
+            res.status(403).json({ message: "validation failed" })
+            return
         }
 
-        const user = await client.user.findUnique({
+        const user = await client.User.findUnique({
             where: {
                 username: parsedData.data.username
             }
         })
         if (!user) {
-             res.status(400).json({ message: "didnt find any user" })
+            res.status(400).json({ message: "didnt find any user" })
             return
         }
         // const isPasswordValid = await bcrypt.compare(parsedData.data.password, user.password)
@@ -56,11 +56,11 @@ return
         //     return res.status(400).json({ message: "wrong password" })
         // }
         const accesstoken = generateaccesstoken(user)
-         res.status(200).json({ token: accesstoken })
-         return
+        res.status(200).json({ token: accesstoken })
+        return
     } catch (error) {
         console.log(error);
-        res.status(400).json({message : error})
+        res.status(400).json({ message: error })
 
     }
 }
@@ -76,29 +76,61 @@ export const getAvatars = async (req: Request, res: Response) => {
 
 export const getUserMetadata = async (req: CustomRequest, res: Response) => {
     const parsedData = updateMetadataSchema.safeParse(req.body)
-    if(!parsedData){
-        res.status(400).json({message : "metadata didnt recieved"})
+    if (!parsedData) {
+        res.status(400).json({ message: "metadata didnt recieved" })
         return
     }
 
-   try {
-     const user = await client.user.update({
-         where : {
-             id : req.userId
-         },
-         data : {
-             avatarId : parsedData.data?.avatarid
-         }
-     })
-     res.status(200).json({message : "metadata updated"})
-   } catch (error) {
-    res.status(400).json({message : error})
-   }
+    try {
+        const user = await client.user.update({
+            where: {
+                id: req.userId
+            },
+            data: {
+                avatarId: parsedData.data?.avatarid
+            }
+        })
+        res.status(200).json({ message: "metadata updated" })
+    } catch (error) {
+        res.status(400).json({ message: error })
+    }
 }
 
 
 
 
 export const getBulkUserData = async (req: Request, res: Response) => {
- const userIds = req.query.userId
+
+   try {
+     const userIdString = (req.query.ids ?? "[]") as String
+     const userIds = (userIdString).slice(1, userIdString?.length - 2).split(",")
+     console.log(
+         userIds
+     );
+ 
+     const metadata = await client.user.findMany({
+         where: {
+             id: userIds
+         },
+         select: {
+             avatar: true,
+             id: true
+         }
+     })
+ 
+     if (!metadata) {
+         res.status(400).json({ message: "didnt get users metadata" })
+         return
+     }
+ 
+     res.status(200).json({
+       avatars : metadata.map((m : any)=> ({
+         userId : m.id,
+         imageUrl : m.avatar?.imageUrl
+       })    )
+     })
+ 
+   } catch (error) {
+    res.status(400).json({error })
+   }
 }

@@ -23,6 +23,13 @@ export const createSpaceSchema = z.object({
     mapId : z.string()
 })
 
+
+export const deleteElementSchema = z.object({
+spaceId : z.string(),
+elementId : z.string()
+})
+
+
 export const addElementSchema = z.object({
     elementId : z.string(),
     spaceId : z.string(),

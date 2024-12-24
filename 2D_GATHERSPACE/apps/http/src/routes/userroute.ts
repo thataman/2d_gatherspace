@@ -4,5 +4,5 @@ import { userMiddleware } from "../middleware/usermiddleware";
 export const userRouter = Router()
 
 userRouter.route("/metadata").post(userMiddleware,getUserMetadata)
-userRouter.route("/metadata/bulk").get(userMiddleware,getBulkUserData)
+userRouter.route("/metadata/bulk").get(getBulkUserData)
 
