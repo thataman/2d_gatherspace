@@ -1,7 +1,12 @@
+import { CardWithForm } from "./pages/login"
+import Mapbuilder from  "../game/mapbuilder"
 
 const App = () => {
   return (
-    <div className="bg-slate-600 rounded-sm">App</div>
+    <>
+    {/* <CardWithForm /> */}
+ <Mapbuilder/>
+    </>
   )
 }
 
