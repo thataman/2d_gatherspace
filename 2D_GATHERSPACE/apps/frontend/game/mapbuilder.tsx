@@ -9,15 +9,9 @@ const Mapbuilder = () => {
 
 const gameref = useRef<HTMLDivElement | null>(null)
 const game = useRef<Phaser.Game | null>(null)
+const sidebarref = useRef<HTMLDivElement | null>(null)
 
-// window.addEventListener("click" ,(event)=>{
-//     if(!gameref.current?.contains(event.target as Node)){
-//         console.log("clicked outside");
-//         if (mapManager.getInstance().getGhostElements()) {
-//             mapManager.getInstance().clearGhostElements(null)
-//         }
-//     }
-// })
+
 
 useEffect(() => {
     // Ensure Phaser game is created only once
@@ -33,6 +27,7 @@ useEffect(() => {
 
     // Create the Phaser game instance
     game.current = new Phaser.Game(config);
+    
 
     // Cleanup function to destroy the game instance on component unmount
     return () => {
@@ -40,6 +35,31 @@ useEffect(() => {
       game.current = null;
     };
   }, []);
+
+  useEffect(()=>{
+
+    window.addEventListener("click" ,(event)=>{
+    if((!gameref.current?.contains(event.target as Node)) && (!sidebarref.current?.contains(event.target as Node))){
+        console.log("clicked outside");
+        if (mapManager.getInstance().getGhostElements()) {
+
+            mapManager.getInstance().clearGhostElements()
+        }
+    }
+})
+
+return ()=>{
+window.removeEventListener("click", (event)=>{
+    if(!gameref.current?.contains(event.target as Node)){
+        console.log("clicked outside");
+        if (mapManager.getInstance().getGhostElements()) {
+
+            mapManager.getInstance().clearGhostElements()
+        }
+    }
+})
+}
+  },[])
 
 const selector =(e : any)=>{
     console.log(e.key);
@@ -52,7 +72,7 @@ const selector =(e : any)=>{
   return (
     <>
    <div ref={gameref} style={{ width: "800px", height: "600px" }}></div>
-   <div> {Elementslist.map((e)=>(
+   <div ref={sidebarref} > {Elementslist.map((e)=>(
     <div ><img onClick={()=>selector(e)} src={e.sprite} alt="" /></div>
    ))} </div>
     </>

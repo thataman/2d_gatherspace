@@ -26,8 +26,9 @@ export class mapManager extends Phaser.Scene {
 
   };
 
-  public clearGhostElements = (elements: any) => {
-    this.ghostelements = elements;
+  public clearGhostElements = () => {
+    this.ghostelements.destroy()
+    this.ghostelements = null;
 
   };
 
