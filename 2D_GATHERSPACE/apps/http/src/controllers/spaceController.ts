@@ -115,6 +115,13 @@ export const getAllSpaces = async (req: CustomRequest, res: Response) => {
         }
     })
 
+    if (!space) {
+        res.status(400).json({
+            message :"no spaces avaialble"
+        })
+        return
+    }
+
     res.status(200).json({
         spaces : space.map((s : any)=>({
             id : s.id,
@@ -126,15 +133,55 @@ export const getAllSpaces = async (req: CustomRequest, res: Response) => {
 }
 
 
-export const getSpace = async (req: Request, res: Response) => {
-    res.json("signup")
+export const getSpace = async (req: CustomRequest, res: Response) => {
+    const space = await client.space.findUnique({
+        where : {
+            id : req.params.spaceId
+        },
+        select :{
+            width : true,
+            height : true ,
+            elements : {
+                select : { 
+                    id : true,
+                    x : true,
+                    y : true,
+                    element : true
+                }
+            }
+        }
+    })
+
+    if(!space){
+        res.status(400).json({message : " space not found"})
+        return
+    }
+
+    
+
+    res.status(200).json({
+        dimensions : `${space.width} x${space.height}`,
+        elements : space.elements.map((e : any)=>({
+            id : e.id,
+            element : {
+                id : e.element.id,
+                imageUrl : e.element.imageUrl,
+                height : e.element.height ,
+                width : e.element.width,
+                static : e.element.static
+            },
+            x: e.x,
+            y : e.y
+
+        }))
+    })
 }
 
 export const addElement = async (req: CustomRequest, res: Response) => {
     const parsedData = addElementSchema.safeParse(req.body)
     if (!parsedData) {
         res.status(400).json({message : "validation failed"})
-        
+        return
     }
 
     const space = await client.space.findUnique({
@@ -172,16 +219,28 @@ export const deleteElement = async (req:CustomRequest, res: Response) => {
         return
     }
 
-    const space = await client.space.findUnique({
+    const spaceelements = await client.spaceelements.findUnique({
         where : {
-             id : parsedData?.data?.spaceId,
-             creatorId : req.userId
+            id : parsedData?.data?.Id
+        },
+        select : {
+            space : true
         }
     })
 
-    if(!space){
-        res.status(400).json({message : " space not found"})
+
+    if(spaceelements?.space?.creatorId !== req.userId){
+        res.status(400).json({
+            message : "unauthorised "
+        })
+        return
     }
 
-    
+    await client.spaceelements.delete({
+        where : {
+            id : parsedData?.data?.Id
+        }
+    })
+
+    res.status(200).json({message : " element deleted "})
 }
