@@ -1,6 +1,10 @@
 import { WebSocket } from "ws"
 import { outgoingMessage } from "./types"
+import { RoomManager } from "./roomManager"
+import Jwt, { JwtPayload } from "jsonwebtoken"
+import client from "@repo/db/client"
 
+const secretaccesskey = "hqbwgkqWKRGRHGBQUEHRGUHQWJGHQJH"
 function generateRandomId(length: number) {
     const data = "abcdefghijklmnopqrstuvwxyz1234567890"
     let result = ""
@@ -12,29 +16,121 @@ function generateRandomId(length: number) {
 
 
 export class User {
-    static instance: User;
+
     public id: string;
+    public userId?: string
+    private x: number;
+    private y: number
+    private spaceId?: string
+
     constructor(private ws: WebSocket) {
         this.id = generateRandomId(10)
+        this.x = 0;
+        this.y = 0
+        this.initHandlers()
     }
 
-send(payload : outgoingMessage){
-    this.ws.send(JSON.stringify(payload))
-}
+    send(payload: outgoingMessage) {
+        this.ws.send(JSON.stringify(payload))
+    }
 
     initHandlers() {
-        this.ws.on("message", (data) => {
+        this.ws.on("message", async (data) => {
             const parsedMessage = JSON.parse(data.toString())
             switch (parsedMessage.type) {
                 case "join":
+                    const spaceId = parsedMessage.payload.spaceId
+                    const token = parsedMessage.payload.token
+                    const userId = (Jwt.verify(token, secretaccesskey) as JwtPayload).userId
+                    if (!userId) {
+                        this.ws.close();
+                        return
+                    }
+                    this.userId = userId
+                    const space = await client.space.findFirst({
+                        where: {
+                            id: spaceId
+                        },
+                        select: {
+                            width: true,
+                            height: true
+                        }
+                    })
+                    if (!space) {
+                        this.ws.close()
+                        return
+                    }
+                    this.spaceId = spaceId
+                    RoomManager.getInstance().addUser(spaceId, this)
+                    this.x = Math.floor(Math.random() * space.width)
+                    this.y = Math.floor(Math.random() * space.height)
+                    this.send({
+                        type: "space-joined",
+                        payload: {
+                            spawn: {
+                                x: this.x,
+                                y: this.y,
+                            }
+                        },
+                        users: RoomManager.getInstance().Rooms.get(spaceId)?.map((e) => ({
+                            //jo apna user hai usko chhat kr data bhejna padega
+                            id: e.id,
+                            x : e.x,
+                            y : e.y
+                        })) ?? []
+                    })
 
+                    RoomManager.getInstance().broadcast({
+                        type: "user-join",
+                        payload: {
+                            userId: this.id,
+                            x: this.x,
+                            y: this.y
+                        }
+                    }, this, this.spaceId!)
                     break;
                 case "move":
+                    let moveX = parseInt(parsedMessage.payload.x)
+                    let moveY = parseInt(parsedMessage.payload.y)
+                    moveX = Math.pow(moveX - this.x, 2)
+                    moveY = Math.pow(moveY - this.y, 2)
+                    if ((moveX == 0 && moveY == 1) || (moveX == 1 && moveY == 0)) {
+                        this.x = parsedMessage.payload.x
+                        this.y = parsedMessage.payload.y
+                        RoomManager.getInstance().broadcast({
+                            type: "movement",
+                            payload: {
+                                x: this.x,
+                                y: this.y,
+                                userId: this.id
+                            }
+                        }, this, this.spaceId!)
+                        return
+                    } else {
+                        this.send({
+                            type: "movement-rejected",
+                            payload: {
+                                x: this.x,
+                                y: this.y
+                            }
+                        })
+                    }
+
 
                     break;
                 default:
                     break;
             }
         })
+    }
+
+    destroy() {
+        RoomManager.getInstance().broadcast({
+            type: "user-left",
+            payload: {
+                userId: this.id
+            }
+        },this,this.spaceId!)
+        RoomManager.getInstance().removeUser(this, this.spaceId!)
     }
 }
