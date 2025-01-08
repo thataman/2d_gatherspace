@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "npx esbuild src/index.ts --bundle --outfile=dist/index.js --platform=node --tsconfig=tsconfig.json",
+    "build": "npx esbuild ./src --bundle --outfile=./dist --platform=node --tsconfig=tsconfig.json",
     "start": "node dist/index.js",
     "dev": "npm run build && npm run start"
   },
@@ -12,7 +12,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@repo/db": "workspace:*",
+    "@types/jsonwebtoken": "^9.0.7",
     "@types/ws": "^8.5.13",
+    "jsonwebtoken": "^9.0.2",
     "ws": "^8.18.0"
   }
 }
