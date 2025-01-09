@@ -38,4 +38,11 @@ this.Rooms.get(roomId)?.forEach((e)=>{
     }
 })
     }
+
+    public removeUser(user : User, spaceId:string){
+if(this.Rooms.has(spaceId)){
+    return
+}
+this.Rooms.set(spaceId,this.Rooms.get(spaceId)?.filter((u)=>u.id!== user.id) ?? [])
+    }
 }
