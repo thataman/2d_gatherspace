@@ -1,80 +1,81 @@
-
-import  { useRef ,useEffect} from 'react'
-import { mapManager } from './classes/mapmanager';
+import React from 'react';
+import { useRef, useEffect } from 'react'
+import { MapManager } from './classes/mapmanager';
 import Elementslist from './elementslist';
 
-import { Input } from 'phaser';
+
 
 const Mapbuilder = () => {
 
-const gameref = useRef<HTMLDivElement | null>(null)
-const game = useRef<Phaser.Game | null>(null)
-const sidebarref = useRef<HTMLDivElement | null>(null)
+  const gameref = useRef<HTMLDivElement | null>(null)
+  const game = useRef<Phaser.Game | null>(null)
+  const sidebarref = useRef<HTMLDivElement | null>(null)
 
+  useEffect(() => {
 
-
-useEffect(() => {
-    // Ensure Phaser game is created only once
     if (!gameref.current) return;
 
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
       width: 800,
       height: 600,
-      parent: gameref.current, // Attach the game to the DOM element
-      scene: new mapManager(), // Use your custom scene
+      parent: gameref.current,
+      physics: {
+        default: 'arcade', // Enable Arcade Physics
+        arcade: {
+            gravity: { x: 0, y: 0 }, // Optional: Set gravity (if needed)
+            debug: false,       // Optional: Enable debug mode for visual debugging
+        }
+    },
+      scene: new MapManager(),
     };
 
-    // Create the Phaser game instance
-    game.current = new Phaser.Game(config);
-    
 
-    // Cleanup function to destroy the game instance on component unmount
+    game.current = new Phaser.Game(config);
+
+
+
     return () => {
       game.current?.destroy(true);
       game.current = null;
     };
   }, []);
 
-  useEffect(()=>{
+  useEffect(() => {
 
-    window.addEventListener("click" ,(event)=>{
-    if((!gameref.current?.contains(event.target as Node)) && (!sidebarref.current?.contains(event.target as Node))){
+    const handleClickEvent = (event: MouseEvent) => {
+      if ((!gameref.current?.contains(event.target as Node)) && (!sidebarref.current?.contains(event.target as Node))) {
         console.log("clicked outside");
-        if (mapManager.getInstance().getGhostElements()) {
-
-            mapManager.getInstance().clearGhostElements()
+        if (MapManager.getInstance().getGhostElements()) {
+          MapManager.getInstance().clearSelectedElements()
+          MapManager.getInstance().clearGhostElements()
         }
+      }
     }
-})
 
-return ()=>{
-window.removeEventListener("click", (event)=>{
-    if(!gameref.current?.contains(event.target as Node)){
-        console.log("clicked outside");
-        if (mapManager.getInstance().getGhostElements()) {
+    window.addEventListener("click", handleClickEvent)
 
-            mapManager.getInstance().clearGhostElements()
-        }
+    return () => {
+      window.removeEventListener("click", handleClickEvent)
     }
-})
-}
-  },[])
+  }, [])
 
-const selector =(e : any)=>{
+  const selector = (e: any) => {
     console.log(e.key);
-    
-    mapManager.getInstance().setSelectedElements(e.key)
-   
-    
-}
+
+    MapManager.getInstance().setSelectedElements(e.key, e.static)
+
+
+
+
+  }
 
   return (
     <>
-   <div ref={gameref} style={{ width: "800px", height: "600px" }}></div>
-   <div ref={sidebarref} > {Elementslist.map((e)=>(
-    <div ><img onClick={()=>selector(e)} src={e.sprite} alt="" /></div>
-   ))} </div>
+      <div ref={gameref} style={{ width: "800px", height: "600px" }}></div>
+      <div ref={sidebarref} > {Elementslist.map((e) => (
+        <div ><img onClick={() => selector(e)} src={e.sprite} alt="" /></div>
+      ))} </div>
     </>
   )
 }
