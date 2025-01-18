@@ -64,6 +64,9 @@ const spacebuilder = () => {
             const recievedData = await axios.get("some url")
             setspaceData(recievedData?.data)
             ElementSpriteManger.getInstance().elementList = recievedData?.data?.elements
+            ElementSpriteManger.getInstance().dimensionX = recievedData?.data?.dimensions.split("x")[0]
+            ElementSpriteManger.getInstance().dimensionY = recievedData?.data?.dimensions.split("x")[1]
+
         }
         fetchElementsData(spaceId)
     }, [])
