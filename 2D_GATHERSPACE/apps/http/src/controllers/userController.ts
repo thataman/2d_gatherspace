@@ -17,7 +17,7 @@ export const signupUser = async (req: Request, res: Response): Promise<void> => 
 
         // const hashedPassword = await bycrpt.hash(parsedData.data.password, 10);
 
-        const user = await client.User.create({
+        const user = await client.user.create({
             data: {
                 username: parsedData.data.username,
                 // password: hashedPassword,
@@ -41,7 +41,7 @@ export const signinUser = async (req: Request, res: Response): Promise<void> => 
             return
         }
 
-        const user = await client.User.findUnique({
+        const user = await client.user.findUnique({
             where: {
                 username: parsedData.data.username
             }
