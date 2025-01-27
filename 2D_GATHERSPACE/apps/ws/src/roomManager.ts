@@ -1,9 +1,15 @@
 import { outgoingMessage } from "./types"
 import { User } from "./User"
 
+interface idsData {
+    id:string,
+    x:number,
+    y:number
+}
 
 export class RoomManager {
     Rooms: Map<string, User[]> = new Map()
+    closeCall : Map<string,Map<number,idsData[]>> = new Map()
 
     static instance: RoomManager
 
