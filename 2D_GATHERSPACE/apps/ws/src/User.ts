@@ -64,6 +64,8 @@ export class User {
                     RoomManager.getInstance().addUser(spaceId, this)
                     this.x = Math.floor(Math.random() * space.width)
                     this.y = Math.floor(Math.random() * space.height)
+
+                    //sending data to the user 
                     this.send({
                         type: "space-joined",
                         payload: {
@@ -75,11 +77,15 @@ export class User {
                         users: RoomManager.getInstance().Rooms.get(spaceId)?.map((e) => ({
                             //jo apna user hai usko chhat kr data bhejna padega
                             id: e.id,
-                            x : e.x,
-                            y : e.y
+                            x: e.x,
+                            y: e.y
                         })) ?? []
                     })
 
+                    //setting data in closecall map
+                    RoomManager.getInstance().closeCall.get(this.spaceId!)?.set(this.x, [...(RoomManager.getInstance().closeCall.get(this.spaceId!)?.get(this.x) ?? []), { id: this.id, x: this.x, y: this.y }])
+                   
+                   //sending data to everyone of user joining
                     RoomManager.getInstance().broadcast({
                         type: "user-join",
                         payload: {
@@ -94,9 +100,55 @@ export class User {
                     let moveY = parseInt(parsedMessage.payload.y)
                     moveX = Math.pow(moveX - this.x, 2)
                     moveY = Math.pow(moveY - this.y, 2)
+
+                    const roomManager = RoomManager.getInstance()
+
+                    //removing old data
                     if ((moveX == 0 && moveY == 1) || (moveX == 1 && moveY == 0)) {
+                        const data = roomManager.closeCall.get(this.spaceId!)?.get((this.x))
+                        if (data) {
+                            for (let index = 0; index < data.length; index++) {
+                                const element = data[index];
+                                if (this.id === element.id) {
+                                    data.splice(index, 1)
+                                    break;
+                                }
+                            }
+                        }
+
+                        //setting up new data
                         this.x = parsedMessage.payload.x
                         this.y = parsedMessage.payload.y
+                        roomManager.closeCall.get(this.spaceId!)?.set(this.x, [...(roomManager.closeCall.get(this.spaceId!)?.get(this.x) ?? []), { id: this.id, x: this.x, y: this.y }])
+
+                        //finding closer data
+                        const closerData: string[] = []
+                        for (let i = -1; i < 2; i++) {
+                            const someoneThere = roomManager.closeCall.get(this.spaceId!)?.get((this.x + i))
+                            if (someoneThere) {
+                                for (let j = 0; j < someoneThere.length; j++) {
+                                    const e = someoneThere[j]
+                                    if (this.id !== e.id) {
+                                        if (this.y == e.y || this.y == e.y + 1 || this.y == e.y - 1) {
+                                            closerData.push(e.id)
+                                        }
+                                    }
+                                    else {
+                                        someoneThere.splice(j, 1)
+                                        j--
+
+                                    }
+                                }
+                            }
+
+                        }
+                        this.send({
+                            type: "closer",
+                            payload: {
+                                data : closerData
+                            }
+                        })
+                        //sending movement data to every other member
                         RoomManager.getInstance().broadcast({
                             type: "movement",
                             payload: {
@@ -106,7 +158,9 @@ export class User {
                             }
                         }, this, this.spaceId!)
                         return
-                    } else {
+                    } 
+                    //sending rejection data to user
+                    else {
                         this.send({
                             type: "movement-rejected",
                             payload: {
@@ -124,13 +178,14 @@ export class User {
         })
     }
 
+    //sending user left signal
     destroy() {
         RoomManager.getInstance().broadcast({
             type: "user-left",
             payload: {
                 userId: this.id
             }
-        },this,this.spaceId!)
+        }, this, this.spaceId!)
         RoomManager.getInstance().removeUser(this, this.spaceId!)
     }
 }
