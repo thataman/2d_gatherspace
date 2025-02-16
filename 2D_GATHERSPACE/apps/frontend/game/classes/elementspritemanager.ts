@@ -9,35 +9,39 @@ interface spaceElement {
   id: string,
   element: element,
   x: number,
-  y : number
+  y: number
 
 }
 
 export class ElementSpriteManger {
 
-private static instance : ElementSpriteManger
-private elementSprite :Map<string,Phaser.GameObjects.Image> = new Map()
-public elementList : spaceElement[]
+  private static instance: ElementSpriteManger
+  private elementSprite: Map<string, Phaser.GameObjects.Image> = new Map()
+  public elementList: spaceElement[]
+  public dimensionX: number
+  public dimensionY: number
 
 
-public static getInstance() :ElementSpriteManger {
+  private constructor() {
+
+  }
+  public static getInstance(): ElementSpriteManger {
     if (!this.instance) {
       this.instance = new ElementSpriteManger()
     }
     return this.instance
   }
 
-  public getallelementSprite(){
+  public getallelementSprite() {
     return this.elementSprite
-     }
-
- public getelementSprite(key :string){
-return this.elementSprite[key]
- }
-
-
- public setelementSprite(key :string ,gameSprite : Phaser.GameObjects.Image){
-    this.elementSprite[key] = gameSprite
-     }
-
   }
+
+  public getelementSprite(key: string) {
+    return this.elementSprite[key]
+  }
+
+  public setelementSprite(key: string, gameSprite: Phaser.GameObjects.Image) {
+    this.elementSprite[key] = gameSprite
+  }
+
+}
