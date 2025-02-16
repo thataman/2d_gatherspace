@@ -1,57 +1,106 @@
 import Phaser from "phaser"
 import Elementslist from "../elementslist";
 
+interface element {
+  width: number,
+  height: number,
+  x: number,
+  y: number
+}
 
-export class mapManager extends Phaser.Scene {
+export class MapManager extends Phaser.Scene {
 
-  static instance: any;
-  selectedelements: any | null
-  ghostelements: any | null
-  static createthis: any | null
+  static instance: MapManager | null = null;
+  private selectedelements: string | null = null;
+  private staticElement: boolean = false
+  private ghostelements!: Phaser.GameObjects.Image | null
+  protected static createthis: Phaser.Scene
+  public mapElement: element[] = []
+
+
+
 
   constructor() {
-    super({ key: "mapManager" })
+    super({ key: "MapManager" })
+    MapManager.instance = this
   }
 
-  public static getInstance() {
+  public checkoutbound(x, y, width = 32, height = 32, mapwidth = 800, mapheight = 600) {
+
+    let x1 = x - (width / 2); let y1 = y + (height / 2)
+    let x2 = x + (width / 2); let y2 = y - (height / 2)
+
+    if (x1 > mapwidth || x1 < 0 || x2 > mapwidth || x2 < 0 || y1 > mapheight || y1 < 0 || y2 > mapheight || y2 < 0) {
+      return false
+    }
+
+    return true
+  }
+
+  public checkOverlap(x, y, width = 32, height = 32) {
+    if (this.mapElement == null) return true
+
+    let x1 = x - width / 2;
+    let y1 = y + height / 2;
+    let x2 = x + width / 2;
+    let y2 = y - height / 2;
+    for (const e of this.mapElement) {
+      let x3 = e.x - e.width / 2;
+      let y3 = e.y + e.height / 2;
+      let x4 = e.x + e.width / 2;
+      let y4 = e.y - e.height / 2;
+
+      if (
+        x1 < x4 && x2 > x3 && y1 > y4 && y2 < y3
+      ) {
+
+        return false;
+      }
+
+    }
+    return true
+
+  }
+
+  public static getInstance(): MapManager {
     if (!this.instance) {
-      this.instance = new mapManager()
+      this.instance = new MapManager()
     }
     return this.instance
   }
 
-  public clearSelectedElements = (elements: any) => {
-    this.selectedelements = elements;
+  public clearSelectedElements = (): void => {
+    this.selectedelements = null;
 
 
   };
 
-  public clearGhostElements = () => {
-    this.ghostelements.destroy()
+  public clearGhostElements = (): void => {
+    this.ghostelements?.destroy()
     this.ghostelements = null;
 
   };
 
-
-  public getGhostElements = () => {
+  public getGhostElements = (): Phaser.GameObjects.Image | null => {
     return this.ghostelements;
   };
 
-  public setSelectedElements = (elements: any) => {
+  public setSelectedElements = (elements: string, staticElement: boolean): void => {
     this.selectedelements = elements;
+    this.staticElement = staticElement
+
     if (this.ghostelements) {
-      this.ghostelements.destroy()
-      this.ghostelements = null
+      this.clearGhostElements()
     }
     if (!this.ghostelements) {
-      this.ghostelements = mapManager.getInstance().createthis.add.image(0, 0, elements).setAlpha(0.5)
+      this.ghostelements = this.add?.image(0, 0, elements).setAlpha(0.5)
+      // this.ghostelements = mapManager.getInstance()?.createthis?.add.image(0, 0, elements).setAlpha(0.5)
 
 
     }
   };
 
-
-  public getSelectedElements = () => {
+  public getSelectedElements = (): string | any => {
     return this.selectedelements;
   };
 
@@ -63,31 +112,23 @@ export class mapManager extends Phaser.Scene {
 
   create() {
 
-    mapManager.getInstance().createthis = this
+
     const map = this.make.tilemap({ width: 50, height: 50, tileWidth: 16, tileHeight: 16 });
-
-    // Add a tileset
     const tileset = map.addTilesetImage('grass', null!, 16, 16);
-
-    // Create a layer
     const layer = map.createBlankLayer('Ground', tileset!);
-
-    // Fill the layer with a default tile
     layer?.fill(0);
-
-    // Optional: Set camera bounds to match the map size
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
-    this.add.image(400, 300, "apple")
-
+    
+   
 
 
     this.input.on("pointermove", (pointer: any) => {
-    
 
-      if (mapManager.getInstance().ghostelements) {
-        console.log("ghostelemen made");
 
-        mapManager.getInstance().ghostelements.setPosition(pointer.worldX, pointer.worldY)
+      if (this.ghostelements) {
+
+
+        this.ghostelements?.setPosition(pointer.worldX, pointer.worldY)
       }
     })
 
@@ -96,25 +137,37 @@ export class mapManager extends Phaser.Scene {
 
 
 
-      if (mapManager.getInstance().getSelectedElements()) {
+      if (this.getSelectedElements()) {
         let x = pointer.worldX
         let y = pointer.worldY
 
 
-        this.add.image(x, y, mapManager.getInstance().getSelectedElements())
-        console.log("element placed");
+        if (this.checkoutbound(x, y)) {
+          //this.staticelement me width height only for map manager ke liye
+          if (this.checkOverlap(x, y)) {
+            if (this.staticElement) {
 
-        if (mapManager.getInstance().ghostelements) {
-          console.log("destroying ghostelements");
 
-          mapManager.getInstance().ghostelements.destroy()
-          mapManager.getInstance().ghostelements = null
+              this.add.image(x, y, this.getSelectedElements())
+              // const data = {
+              // elementId : this.getSelectedElements(),
+              // spaceId : "random",
+              // x ,
+              // y
+              // }
+              // console.log(data);
+              const data = {
+                width: 32,
+                height: 32,
+                x,
+                y
+              }
+              this.mapElement.push(data)
+              console.log(this.mapElement);
+
+            }
+          }
         }
-
-
-        mapManager.getInstance().clearSelectedElements(null)
-
-
 
       }
     })
@@ -126,8 +179,8 @@ export class mapManager extends Phaser.Scene {
 
   }
 
-  upload() {
-
+  update() {
+    
   }
 
 
