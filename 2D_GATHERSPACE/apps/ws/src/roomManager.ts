@@ -14,7 +14,7 @@ export class RoomManager {
     static instance: RoomManager
 
     constructor() {
-        this.Rooms = new Map()
+        
     }
 
     static getInstance() {
@@ -26,7 +26,7 @@ export class RoomManager {
 
     public addUser(spaceId: string, user: User) {
         if (!this.Rooms.has(spaceId)) {
-            this.Rooms.set(spaceId, [user])
+            this.Rooms.set(spaceId, [user]) 
             return
         }
 
