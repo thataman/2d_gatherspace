@@ -145,7 +145,7 @@ export class User {
                         this.send({
                             type: "closer",
                             payload: {
-                                data : closerData
+                                data : closerData   
                             }
                         })
                         //sending movement data to every other member
