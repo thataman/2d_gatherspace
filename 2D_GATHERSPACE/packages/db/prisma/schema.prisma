@@ -18,10 +18,10 @@ model User {
   id       String  @id @unique @default(cuid())
   username String  @unique
   password String  @unique
-  avatarId String
+  avatarId String?
   role     Role
   spaces   Space[]
-  avatar   Avatar @relation(fields:[avatarId],references:[id])
+  avatar   Avatar? @relation(fields:[avatarId],references:[id])
 }
 
 model Space {
@@ -49,7 +49,7 @@ model Element {
   id       String @id @unique @default(cuid())
   width    Int
   height   Int
-  imageUrl String
+  imageUrl String?
   static   Boolean
   spaceelement spaceElements[]
   mapelement   mapElements[]
@@ -78,7 +78,7 @@ model mapElements {
 model Avatar {
   id       String  @id @unique @default(cuid())
   imageUrl String?
-  name     String?
+  name     String
   users     User[]
 }
 
